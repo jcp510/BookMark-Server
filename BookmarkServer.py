@@ -44,7 +44,9 @@
 import http.server
 import requests
 import os
+import threading
 from urllib.parse import unquote, parse_qs
+from socketserver import ThreadingMixIn
 
 memory = {}
 
@@ -86,6 +88,9 @@ def CheckURI(uri, timeout=5):
     # (Why is this not 'requests.exceptions.RequestException'?)
     except requests.RequestException:
         return False
+
+class ThreadHTTPServer(ThreadingMixIn, http.server.HTTPServer):
+    'This is an HTTPServer that supports thread-based concurrency.'
 
 class Shortener(http.server.BaseHTTPRequestHandler):
     # Write code inside do_GET that sends a 303 redirect to a known name.
@@ -160,5 +165,5 @@ class Shortener(http.server.BaseHTTPRequestHandler):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     server_address = ('', port)
-    httpd = http.server.HTTPServer(server_address, Shortener)
+    httpd = ThreadHTTPServer(server_address, Shortener)
     httpd.serve_forever()
